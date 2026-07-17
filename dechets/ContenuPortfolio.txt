@@ -1,0 +1,48 @@
+À propos de moi
+Bienvenue sur mon portfolio !
+Je suis titulaire d&rsquo;une licence professionnelle en Informatique, Réseaux et Sécurité, ce qui m&rsquo;a permis d&rsquo;acquérir une solide base technique dans le domaine informatique. Cependant, ma passion m&rsquo;a orienté vers le développement web, un univers dynamique et en constante évolution.
+
+J&rsquo;ai également obtenu une certification de Développeur Fullstack, qui atteste de mes compétences à concevoir et développer des solutions complètes, depuis l&rsquo;interface utilisateur jusqu&rsquo;à la gestion des bases de données. Grâce à cette expertise, je suis capable de transformer des idées en projets concrets et fonctionnels.
+
+Avec une première expérience dans le domaine informatique, je continue à perfectionner mes compétences techniques et à relever de nouveaux défis pour répondre aux besoins variés du développement web. Je suis motivé par l&rsquo;idée de créer des expériences utilisateur intuitives et des applications performantes.
+
+N&rsquo;hésitez pas à parcourir mes projets pour en savoir plus sur mon travail ou à me contacter pour discuter de vos idées.
+
+Certification Développeur Fulls-tack
+La certification Développeur Full-Stack atteste de mes compétences à concevoir, développer et déployer des applications web complètes. Elle couvre à la fois le développement front-end (interfaces utilisateur interactives) et back-end (logique serveur, bases de données). Grâce à cette formation, j&rsquo;ai acquis une maîtrise des technologies modernes telles que HTML, CSS, JavaScript, ainsi que des frameworks et outils comme React, Node.js, et des bases de données SQL/NoSQL.
+
+Diplome licence professionelle en Informatique, Réseau et sécurité
+Titulaire d&rsquo;une Licence Professionnelle en Informatique, Réseaux et Sécurité, j&rsquo;ai acquis des compétences techniques solides dans la gestion des infrastructures et la sécurité informatique. Cependant, ma passion pour le développement web m&rsquo;a conduit à me spécialiser dans ce domaine, où je combine mes connaissances en informatique avec des compétences en conception et développement d&rsquo;applications web complètes.
+
+
+Lors de mon stage en gestion de la relation client, j&rsquo;ai acquis des compétences clés dans l&rsquo;utilisation d&rsquo;outils CRM pour gérer les interactions avec les clients, répondre à leurs demandes et résoudre leurs problèmes. J&rsquo;ai également contribué à l&rsquo;analyse des données clients, à l&rsquo;amélioration des processus de fidélisation, et à la coordination avec les équipes internes pour offrir une expérience client optimale.
+
+Travailler avec la machine Van De Wiele
+J&rsquo;ai assisté un ingénieur dans l&rsquo;installation et la mise en service d&rsquo;une machine Van de Wiele, spécialisée dans le tissage industriel. Pendant près de deux ans, j&rsquo;ai collaboré activement sur la configuration, les tests et l&rsquo;optimisation de la machine, en développant mes compétences techniques et ma compréhension des systèmes industriels complexes.
+
+Responsable et Fondateur - SowTech Consulting
+En tant que fondateur et responsable de SowTech Consulting, j&rsquo;ai créé et développé une entreprise spécialisée dans les services informatiques, notamment dans le domaine du développement web. Mon rôle englobe la définition de la vision stratégique de l&rsquo;entreprise, la gestion des projets, et la supervision des équipes techniques pour assurer la livraison de solutions web de qualité. Fort d&rsquo;une expertise en technologies de pointe, j&rsquo;ai contribué à la croissance de notre portefeuille client en proposant des services innovants, adaptés aux besoins spécifiques de chaque client, tout en maintenant un haut niveau de satisfaction et de performance.
+
+Technicien Développement Informatique
+En tant que Technicien en Développement Informatique, j&rsquo;ai acquis des compétences dans la conception, le développement et la maintenance d&rsquo;applications logicielles. Je maîtrise les langages de programmation, les bases de données et les outils nécessaires pour créer des solutions adaptées aux besoins des utilisateurs. Mon rôle inclut également l&rsquo;analyse des besoins, le test des fonctionnalités.
+
+services 
+
+Création de sites web
+Développement de sites modernes, responsives et optimisés pour le référencement.
+Design graphique
+Conception de logos, brochures, affiches et identité visuelle complète.
+Marketing digital
+Gestion des campagnes publicitaires, stratégie de contenu et optimisation des réseaux sociaux.
+Développement d&rsquo;applications
+Création d&rsquo;applications performantes et adaptées à vos besoins.
+Rédaction de contenu
+Création de textes impactants pour blogs, sites web ou publicités.
+
+Maintenance des sites web
+La maintenance de site web consiste à assurer la mise à jour, la sécurité, la performance et son bon fonctionnement.
+
+
+imdieng-blog.lovestoblog.com
+
+https://www.youtube.com/watch?v=zJE-ze4TfXc&list=PLrKudo5h_b8CKGtcPWIYtWmbTokv8QhlY

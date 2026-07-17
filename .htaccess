@@ -1,0 +1,18 @@
+# Empêche l'accès direct aux fichiers sensibles
+<FilesMatch "(config\.db\.php|\.sql|\.md|composer\.(json|lock))$">
+    Require all denied
+</FilesMatch>
+
+# Protection du dossier dechets si présent
+RedirectMatch 403 /dechets(/|$)
+
+Options -Indexes
+
+# UTF-8
+AddDefaultCharset UTF-8
+
+# Sécurité basique
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
