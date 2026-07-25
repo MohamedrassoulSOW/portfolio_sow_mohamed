@@ -6,6 +6,7 @@ $s = obtenirReglages();
 $projects = recupererProjets();
 $skills = recupererCompetences();
 $services = recupererServices();
+$diplomes = recupererDiplomes();
 $certifications = recupererCertifications();
 $education = recupererParcours('education');
 $experience = recupererParcours('experience');
@@ -65,8 +66,47 @@ function e(?string $value): string {
     <link rel="stylesheet" href="css/color-4.css" class="alternate-style" title="color-4" disabled>
     <link rel="stylesheet" href="css/color-5.css" class="alternate-style" title="color-5" disabled>
     <link rel="stylesheet" href="style-switcher.css">
+    <script>
+    (function () {
+        try {
+            if (localStorage.getItem('portfolioThemeMode') === 'dark') {
+                document.documentElement.classList.add('theme-dark-pending');
+            }
+            var color = localStorage.getItem('portfolioThemeColor');
+            if (color) {
+                document.querySelectorAll('link.alternate-style').forEach(function (link) {
+                    if (link.getAttribute('title') === color) {
+                        link.removeAttribute('disabled');
+                    } else {
+                        link.setAttribute('disabled', 'true');
+                    }
+                });
+            }
+        } catch (e) { /* ignore */ }
+    })();
+    </script>
+    <style>
+        html.theme-dark-pending body,
+        html.theme-dark-pending body.dark {
+            --bg-black-900: #151515;
+            --bg-black-100: #222222;
+            --bg-black-50: #393939;
+            --text-black-900: #ffffff;
+            --text-black-700: #e9e9e9;
+        }
+    </style>
 </head>
 <body>
+    <script>
+    (function () {
+        try {
+            if (localStorage.getItem('portfolioThemeMode') === 'dark') {
+                document.body.classList.add('dark');
+            }
+            document.documentElement.classList.remove('theme-dark-pending');
+        } catch (e) { /* ignore */ }
+    })();
+    </script>
     <div class="main-container">
         <div class="aside">
             <div class="logo">
@@ -77,6 +117,7 @@ function e(?string $value): string {
                 <li><a href="#home" class="active"><i class="fa fa-home"></i>Accueil</a></li>
                 <li><a href="#about"><i class="fa fa-user"></i>À propos de moi</a></li>
                 <li><a href="#services"><i class="fa fa-list"></i>Services</a></li>
+                <li><a href="#diplomes"><i class="fa fa-graduation-cap"></i>Diplômes</a></li>
                 <li><a href="#certifications"><i class="fa fa-certificate"></i>Certifications</a></li>
                 <li><a href="#portfolio"><i class="fa fa-briefcase"></i>Portfolio</a></li>
                 <li><a href="#contact"><i class="fa fa-comments"></i>Contact</a></li>
@@ -219,6 +260,57 @@ function e(?string $value): string {
                 </div>
             </section>
 
+            <section class="diplomes section" id="diplomes">
+                <div class="container">
+                    <div class="row">
+                        <div class="section-title padd-15">
+                            <h2>Diplômes</h2>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <?php if (empty($diplomes)): ?>
+                            <div class="padd-15"><p class="empty-message">Aucun diplôme pour le moment.</p></div>
+                        <?php endif; ?>
+                        <?php foreach ($diplomes as $diplome): ?>
+                            <?php
+                                $imgSrc = (!empty($diplome['image']) && file_exists($diplome['image'])) ? $diplome['image'] : '';
+                            ?>
+                            <div class="credential-item padd-15">
+                                <div class="credential-item-inner js-credential-card<?= $imgSrc ? ' has-image' : '' ?>"
+                                     role="button"
+                                     tabindex="0"
+                                     data-type="diplome"
+                                     data-title="<?= e($diplome['title']) ?>"
+                                     data-issuer="<?= e($diplome['issuer']) ?>"
+                                     data-date="<?= e($diplome['date_label']) ?>"
+                                     data-description="<?= e($diplome['description'] ?? '') ?>"
+                                     data-url="<?= e($diplome['url'] ?? '') ?>"
+                                     data-image="<?= e($imgSrc) ?>"
+                                     data-icon="<?= e($diplome['icon'] ?: 'fa fa-graduation-cap') ?>">
+                                    <?php if ($imgSrc): ?>
+                                        <div class="credential-thumb">
+                                            <img src="<?= e($imgSrc) ?>" alt="<?= e($diplome['title']) ?>">
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="icon">
+                                            <i class="<?= e($diplome['icon'] ?: 'fa fa-graduation-cap') ?>"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="credential-body">
+                                        <span class="credential-issuer"><?= e($diplome['issuer']) ?></span>
+                                        <h4><?= e($diplome['title']) ?></h4>
+                                        <?php if (!empty($diplome['date_label'])): ?>
+                                            <span class="credential-date"><i class="fa fa-calendar"></i> <?= e($diplome['date_label']) ?></span>
+                                        <?php endif; ?>
+                                        <span class="credential-hint">Voir le diplôme <i class="fa fa-eye"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </section>
+
             <section class="certifications section" id="certifications">
                 <div class="container">
                     <div class="row">
@@ -228,28 +320,40 @@ function e(?string $value): string {
                     </div>
                     <div class="row">
                         <?php if (empty($certifications)): ?>
-                            <div class="padd-15"><p>Aucune certification pour le moment.</p></div>
+                            <div class="padd-15"><p class="empty-message">Aucune certification pour le moment.</p></div>
                         <?php endif; ?>
                         <?php foreach ($certifications as $cert): ?>
-                            <div class="certification-item padd-15">
-                                <div class="certification-item-inner">
-                                    <div class="icon">
-                                        <i class="<?= e($cert['icon'] ?: 'fa fa-certificate') ?>"></i>
-                                    </div>
-                                    <div class="certification-body">
-                                        <span class="certification-issuer"><?= e($cert['issuer']) ?></span>
+                            <?php
+                                $imgSrc = (!empty($cert['image']) && file_exists($cert['image'])) ? $cert['image'] : '';
+                            ?>
+                            <div class="credential-item padd-15">
+                                <div class="credential-item-inner js-credential-card<?= $imgSrc ? ' has-image' : '' ?>"
+                                     role="button"
+                                     tabindex="0"
+                                     data-type="certification"
+                                     data-title="<?= e($cert['title']) ?>"
+                                     data-issuer="<?= e($cert['issuer']) ?>"
+                                     data-date="<?= e($cert['date_label']) ?>"
+                                     data-description="<?= e($cert['description'] ?? '') ?>"
+                                     data-url="<?= e($cert['url'] ?? '') ?>"
+                                     data-image="<?= e($imgSrc) ?>"
+                                     data-icon="<?= e($cert['icon'] ?: 'fa fa-certificate') ?>">
+                                    <?php if ($imgSrc): ?>
+                                        <div class="credential-thumb">
+                                            <img src="<?= e($imgSrc) ?>" alt="<?= e($cert['title']) ?>">
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="icon">
+                                            <i class="<?= e($cert['icon'] ?: 'fa fa-certificate') ?>"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="credential-body">
+                                        <span class="credential-issuer"><?= e($cert['issuer']) ?></span>
                                         <h4><?= e($cert['title']) ?></h4>
                                         <?php if (!empty($cert['date_label'])): ?>
-                                            <span class="certification-date"><i class="fa fa-calendar"></i> <?= e($cert['date_label']) ?></span>
+                                            <span class="credential-date"><i class="fa fa-calendar"></i> <?= e($cert['date_label']) ?></span>
                                         <?php endif; ?>
-                                        <?php if (!empty($cert['description'])): ?>
-                                            <p><?= e($cert['description']) ?></p>
-                                        <?php endif; ?>
-                                        <?php if (!empty($cert['url'])): ?>
-                                            <a href="<?= e($cert['url']) ?>" target="_blank" rel="noopener noreferrer" class="certification-link">
-                                                Voir le certificat <i class="fa fa-external-link-alt"></i>
-                                            </a>
-                                        <?php endif; ?>
+                                        <span class="credential-hint">Voir le certificat <i class="fa fa-eye"></i></span>
                                     </div>
                                 </div>
                             </div>
@@ -268,7 +372,7 @@ function e(?string $value): string {
                     </div>
                     <div class="row">
                         <?php if (empty($projects)): ?>
-                            <div class="padd-15"><p>Aucun projet pour le moment.</p></div>
+                            <div class="padd-15"><p class="empty-message">Aucun projet pour le moment.</p></div>
                         <?php endif; ?>
                         <?php foreach ($projects as $project): ?>
                             <div class="portfolio-item padd-15">
@@ -419,6 +523,25 @@ function e(?string $value): string {
         </div>
     </div>
 
+    <div id="credentialModal" class="modal-overlay credential-modal" style="display: none;" aria-hidden="true">
+        <div class="modal-content credential-modal-content" role="dialog" aria-labelledby="credentialModalTitle" aria-modal="true">
+            <button type="button" class="close-modal" id="closeCredentialModal" aria-label="Fermer">&times;</button>
+            <div class="credential-modal-image-wrap" id="credentialModalImageWrap" style="display: none;">
+                <img src="" alt="" id="credentialModalImage">
+            </div>
+            <div class="credential-modal-icon" id="credentialModalIcon" aria-hidden="true">
+                <i class="fa fa-graduation-cap"></i>
+            </div>
+            <span class="credential-modal-issuer" id="credentialModalIssuer"></span>
+            <h3 id="credentialModalTitle"></h3>
+            <span class="credential-modal-date" id="credentialModalDate"></span>
+            <p class="credential-modal-description" id="credentialModalDescription"></p>
+            <a href="#" target="_blank" rel="noopener noreferrer" class="credential-modal-link" id="credentialModalLink" style="display: none;">
+                Ouvrir le document <i class="fa fa-external-link-alt"></i>
+            </a>
+        </div>
+    </div>
+
     <div class="style-switcher">
         <div class="style-switcher-toggler s-icon"><i class="fas fa-cog fa-spin"></i></div>
         <div class="day-night s-icon"><i class="fas"></i></div>
@@ -463,11 +586,99 @@ function e(?string $value): string {
             }
         }
     };
+    window.openCredentialModal = function(card) {
+        const modal = document.getElementById('credentialModal');
+        if (!modal || !card) return;
+        const title = card.getAttribute('data-title') || '';
+        const issuer = card.getAttribute('data-issuer') || '';
+        const date = card.getAttribute('data-date') || '';
+        const description = card.getAttribute('data-description') || '';
+        const url = card.getAttribute('data-url') || '';
+        const image = card.getAttribute('data-image') || '';
+        const icon = card.getAttribute('data-icon') || 'fa fa-graduation-cap';
+        const type = card.getAttribute('data-type') || 'diplome';
+
+        document.getElementById('credentialModalTitle').textContent = title;
+        document.getElementById('credentialModalIssuer').textContent = issuer;
+        const dateEl = document.getElementById('credentialModalDate');
+        if (date) {
+            dateEl.innerHTML = '<i class="fa fa-calendar"></i> ' + date;
+            dateEl.style.display = '';
+        } else {
+            dateEl.textContent = '';
+            dateEl.style.display = 'none';
+        }
+        const descEl = document.getElementById('credentialModalDescription');
+        descEl.textContent = description;
+        descEl.style.display = description ? '' : 'none';
+
+        const imageWrap = document.getElementById('credentialModalImageWrap');
+        const imageEl = document.getElementById('credentialModalImage');
+        const iconEl = document.getElementById('credentialModalIcon');
+        if (image) {
+            imageEl.src = image;
+            imageEl.alt = title;
+            imageWrap.style.display = 'block';
+            iconEl.style.display = 'none';
+            modal.classList.add('has-credential-image');
+        } else {
+            imageEl.removeAttribute('src');
+            imageEl.alt = '';
+            imageWrap.style.display = 'none';
+            iconEl.style.display = 'grid';
+            iconEl.innerHTML = '<i class="' + icon + '"></i>';
+            modal.classList.remove('has-credential-image');
+        }
+
+        const link = document.getElementById('credentialModalLink');
+        if (url) {
+            link.href = url;
+            link.style.display = 'inline-flex';
+            link.innerHTML = (type === 'certification' ? 'Voir le certificat' : 'Voir le diplôme') +
+                ' <i class="fa fa-external-link-alt"></i>';
+        } else {
+            link.style.display = 'none';
+            link.removeAttribute('href');
+        }
+
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeCredentialModal = function() {
+        const modal = document.getElementById('credentialModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = 'auto';
+        }
+    };
+
+    document.querySelectorAll('.js-credential-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            openCredentialModal(card);
+        });
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openCredentialModal(card);
+            }
+        });
+    });
+    const closeCredentialBtn = document.getElementById('closeCredentialModal');
+    if (closeCredentialBtn) {
+        closeCredentialBtn.addEventListener('click', closeCredentialModal);
+    }
+
     window.addEventListener('click', function(event) {
         if (event.target === document.getElementById('loginModal')) closeLoginModal();
+        if (event.target === document.getElementById('credentialModal')) closeCredentialModal();
     });
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeLoginModal();
+        if (e.key === 'Escape') {
+            closeCredentialModal();
+            closeLoginModal();
+        }
     });
     window.addEventListener('load', function() {
         const urlParams = new URLSearchParams(window.location.search);

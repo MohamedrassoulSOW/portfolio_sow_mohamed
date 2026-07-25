@@ -328,29 +328,74 @@ function supprimerParcours(int $id): bool {
     return $stmt->execute([$id]);
 }
 
+function recupererDiplomes(): array {
+    initialiserContenuSite();
+    $cnx = Connexion();
+    return $cnx->query("SELECT * FROM site_diplomes ORDER BY sort_order ASC, id ASC")->fetchAll();
+}
+
+function supprimerImageUpload(?string $path): void {
+    if ($path && file_exists($path) && strpos($path, 'uploads/') === 0) {
+        unlink($path);
+    }
+}
+
+function ajouterDiplome(string $title, string $issuer, string $dateLabel, string $description, string $url, string $icon, int $sort = 0, ?string $image = null): bool {
+    $cnx = Connexion();
+    if ($sort <= 0) {
+        $sort = (int) $cnx->query("SELECT COALESCE(MAX(sort_order),0)+1 FROM site_diplomes")->fetchColumn();
+    }
+    $stmt = $cnx->prepare("INSERT INTO site_diplomes (title, issuer, date_label, description, url, image, icon, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    return $stmt->execute([$title, $issuer, $dateLabel, $description, $url, $image, $icon ?: 'fa fa-graduation-cap', $sort]);
+}
+
+function modifierDiplome(int $id, string $title, string $issuer, string $dateLabel, string $description, string $url, string $icon, int $sort, ?string $image = null): bool {
+    $cnx = Connexion();
+    $stmt = $cnx->prepare("UPDATE site_diplomes SET title = ?, issuer = ?, date_label = ?, description = ?, url = ?, image = ?, icon = ?, sort_order = ? WHERE id = ?");
+    return $stmt->execute([$title, $issuer, $dateLabel, $description, $url, $image, $icon ?: 'fa fa-graduation-cap', $sort, $id]);
+}
+
+function supprimerDiplome(int $id): bool {
+    $cnx = Connexion();
+    $stmt = $cnx->prepare("SELECT image FROM site_diplomes WHERE id = ?");
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+    if ($row) {
+        supprimerImageUpload($row['image'] ?? null);
+    }
+    $stmt = $cnx->prepare("DELETE FROM site_diplomes WHERE id = ?");
+    return $stmt->execute([$id]);
+}
+
 function recupererCertifications(): array {
     initialiserContenuSite();
     $cnx = Connexion();
     return $cnx->query("SELECT * FROM site_certifications ORDER BY sort_order ASC, id ASC")->fetchAll();
 }
 
-function ajouterCertification(string $title, string $issuer, string $dateLabel, string $description, string $url, string $icon, int $sort = 0): bool {
+function ajouterCertification(string $title, string $issuer, string $dateLabel, string $description, string $url, string $icon, int $sort = 0, ?string $image = null): bool {
     $cnx = Connexion();
     if ($sort <= 0) {
         $sort = (int) $cnx->query("SELECT COALESCE(MAX(sort_order),0)+1 FROM site_certifications")->fetchColumn();
     }
-    $stmt = $cnx->prepare("INSERT INTO site_certifications (title, issuer, date_label, description, url, icon, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    return $stmt->execute([$title, $issuer, $dateLabel, $description, $url, $icon ?: 'fa fa-certificate', $sort]);
+    $stmt = $cnx->prepare("INSERT INTO site_certifications (title, issuer, date_label, description, url, image, icon, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    return $stmt->execute([$title, $issuer, $dateLabel, $description, $url, $image, $icon ?: 'fa fa-certificate', $sort]);
 }
 
-function modifierCertification(int $id, string $title, string $issuer, string $dateLabel, string $description, string $url, string $icon, int $sort): bool {
+function modifierCertification(int $id, string $title, string $issuer, string $dateLabel, string $description, string $url, string $icon, int $sort, ?string $image = null): bool {
     $cnx = Connexion();
-    $stmt = $cnx->prepare("UPDATE site_certifications SET title = ?, issuer = ?, date_label = ?, description = ?, url = ?, icon = ?, sort_order = ? WHERE id = ?");
-    return $stmt->execute([$title, $issuer, $dateLabel, $description, $url, $icon ?: 'fa fa-certificate', $sort, $id]);
+    $stmt = $cnx->prepare("UPDATE site_certifications SET title = ?, issuer = ?, date_label = ?, description = ?, url = ?, image = ?, icon = ?, sort_order = ? WHERE id = ?");
+    return $stmt->execute([$title, $issuer, $dateLabel, $description, $url, $image, $icon ?: 'fa fa-certificate', $sort, $id]);
 }
 
 function supprimerCertification(int $id): bool {
     $cnx = Connexion();
+    $stmt = $cnx->prepare("SELECT image FROM site_certifications WHERE id = ?");
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+    if ($row) {
+        supprimerImageUpload($row['image'] ?? null);
+    }
     $stmt = $cnx->prepare("DELETE FROM site_certifications WHERE id = ?");
     return $stmt->execute([$id]);
 }

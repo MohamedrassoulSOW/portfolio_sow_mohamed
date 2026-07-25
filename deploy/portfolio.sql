@@ -99,6 +99,37 @@ LOCK TABLES `projects` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `site_diplomes`
+--
+
+DROP TABLE IF EXISTS `site_diplomes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `site_diplomes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(200) NOT NULL,
+  `issuer` varchar(150) NOT NULL,
+  `date_label` varchar(120) NOT NULL DEFAULT '',
+  `description` text,
+  `url` varchar(500) DEFAULT NULL,
+  `image` varchar(500) DEFAULT NULL,
+  `icon` varchar(80) NOT NULL DEFAULT 'fa fa-graduation-cap',
+  `sort_order` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `site_diplomes`
+--
+
+LOCK TABLES `site_diplomes` WRITE;
+/*!40000 ALTER TABLE `site_diplomes` DISABLE KEYS */;
+INSERT INTO `site_diplomes` VALUES (1,'Licence Professionnelle — Informatique, Réseaux et Sécurité','Établissement d\'enseignement supérieur','Octobre 2022 - Juillet 2023','Titulaire d\'une Licence Professionnelle en Informatique, Réseaux et Sécurité, avec des compétences techniques solides dans la gestion des infrastructures et la sécurité informatique.','',NULL,'fa fa-graduation-cap',1),(2,'Technicien Développement Informatique','Établissement d\'enseignement supérieur','Octobre 2020 - Juillet 2022','Formation de technicien en développement informatique : conception, développement et maintenance d\'applications logicielles.','',NULL,'fa fa-user-graduate',2);
+/*!40000 ALTER TABLE `site_diplomes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `site_certifications`
 --
 
@@ -112,6 +143,7 @@ CREATE TABLE `site_certifications` (
   `date_label` varchar(120) NOT NULL DEFAULT '',
   `description` text,
   `url` varchar(500) DEFAULT NULL,
+  `image` varchar(500) DEFAULT NULL,
   `icon` varchar(80) NOT NULL DEFAULT 'fa fa-certificate',
   `sort_order` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
@@ -124,7 +156,7 @@ CREATE TABLE `site_certifications` (
 
 LOCK TABLES `site_certifications` WRITE;
 /*!40000 ALTER TABLE `site_certifications` DISABLE KEYS */;
-INSERT INTO `site_certifications` VALUES (1,'Développement Web','Udemy','2024','Certification en développement web couvrant le front-end et le back-end.','','fa fa-certificate',1),(2,'Développement Web','Coursera','2024','Formation certifiante en développement web sur Coursera.','','fa fa-award',2),(3,'Entrepreneuriat Numérique','ForceN','2024','Programme ForceN en entrepreneuriat numérique.','','fa fa-medal',3);
+INSERT INTO `site_certifications` VALUES (1,'Développement Web','Udemy','2024','Certification en développement web couvrant le front-end et le back-end.','',NULL,'fa fa-certificate',1),(2,'Développement Web','Coursera','2024','Formation certifiante en développement web sur Coursera.','',NULL,'fa fa-award',2),(3,'Entrepreneuriat Numérique','ForceN','2024','Programme ForceN en entrepreneuriat numérique.','',NULL,'fa fa-medal',3);
 /*!40000 ALTER TABLE `site_certifications` ENABLE KEYS */;
 UNLOCK TABLES;
 

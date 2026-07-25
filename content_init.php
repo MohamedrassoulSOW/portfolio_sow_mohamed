@@ -3,6 +3,17 @@
  * Initialise les tables de contenu du portfolio et injecte les données actuelles.
  * Peut être appelé plusieurs fois sans écraser les données existantes.
  */
+function assurerColonne(PDO $cnx, string $table, string $column, string $definition): void {
+    $stmt = $cnx->prepare(
+        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?"
+    );
+    $stmt->execute([$table, $column]);
+    if ((int) $stmt->fetchColumn() === 0) {
+        $cnx->exec("ALTER TABLE `$table` ADD COLUMN $definition");
+    }
+}
+
 function initialiserContenuSite(): void {
     $cnx = Connexion();
 
@@ -35,6 +46,18 @@ function initialiserContenuSite(): void {
         sort_order INT NOT NULL DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    $cnx->exec("CREATE TABLE IF NOT EXISTS site_diplomes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        issuer VARCHAR(150) NOT NULL,
+        date_label VARCHAR(120) NOT NULL DEFAULT '',
+        description TEXT NULL,
+        url VARCHAR(500) NULL,
+        image VARCHAR(500) NULL,
+        icon VARCHAR(80) NOT NULL DEFAULT 'fa fa-graduation-cap',
+        sort_order INT NOT NULL DEFAULT 0
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     $cnx->exec("CREATE TABLE IF NOT EXISTS site_certifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(200) NOT NULL,
@@ -42,9 +65,25 @@ function initialiserContenuSite(): void {
         date_label VARCHAR(120) NOT NULL DEFAULT '',
         description TEXT NULL,
         url VARCHAR(500) NULL,
+        image VARCHAR(500) NULL,
         icon VARCHAR(80) NOT NULL DEFAULT 'fa fa-certificate',
         sort_order INT NOT NULL DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    assurerColonne($cnx, 'site_diplomes', 'image', 'image VARCHAR(500) NULL AFTER url');
+    assurerColonne($cnx, 'site_certifications', 'image', 'image VARCHAR(500) NULL AFTER url');
+
+    $diplomeCount = (int) $cnx->query("SELECT COUNT(*) FROM site_diplomes")->fetchColumn();
+    if ($diplomeCount === 0) {
+        $diplomes = [
+            ['Licence Professionnelle — Informatique, Réseaux et Sécurité', 'Établissement d\'enseignement supérieur', 'Octobre 2022 - Juillet 2023', "Titulaire d'une Licence Professionnelle en Informatique, Réseaux et Sécurité, avec des compétences techniques solides dans la gestion des infrastructures et la sécurité informatique.", '', 'fa fa-graduation-cap', 1],
+            ['Technicien Développement Informatique', 'Établissement d\'enseignement supérieur', 'Octobre 2020 - Juillet 2022', "Formation de technicien en développement informatique : conception, développement et maintenance d'applications logicielles.", '', 'fa fa-user-graduate', 2],
+        ];
+        $diplomeStmt = $cnx->prepare("INSERT INTO site_diplomes (title, issuer, date_label, description, url, icon, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        foreach ($diplomes as $d) {
+            $diplomeStmt->execute($d);
+        }
+    }
 
     $certCount = (int) $cnx->query("SELECT COUNT(*) FROM site_certifications")->fetchColumn();
     if ($certCount === 0) {

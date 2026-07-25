@@ -20,7 +20,7 @@ function redirigerDashboard(string $status, string $tab = 'overview'): void {
     exit();
 }
 
-$allowedTabs = ['overview', 'profile', 'skills', 'services', 'certifications', 'timeline', 'projects', 'messages'];
+$allowedTabs = ['overview', 'profile', 'skills', 'services', 'diplomes', 'certifications', 'timeline', 'projects', 'messages'];
 $tab = $_GET['tab'] ?? 'overview';
 if (!in_array($tab, $allowedTabs, true)) {
     $tab = 'overview';
@@ -136,8 +136,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirigerDashboard('success_deleted', 'services');
     }
 
+    $credentialImageMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+    // Diplômes
+    if (isset($_POST['ajouter_diplome'])) {
+        $image = uploaderFichierGenerique(
+            $_FILES['image'] ?? null,
+            'uploads/diplomes/',
+            $credentialImageMimes,
+            'diplome_',
+            null
+        );
+        ajouterDiplome(
+            trim($_POST['title'] ?? ''),
+            trim($_POST['issuer'] ?? ''),
+            trim($_POST['date_label'] ?? ''),
+            trim($_POST['description'] ?? ''),
+            trim($_POST['url'] ?? ''),
+            trim($_POST['icon'] ?? 'fa fa-graduation-cap'),
+            (int)($_POST['sort_order'] ?? 0),
+            $image
+        );
+        redirigerDashboard('success_added', 'diplomes');
+    }
+    if (isset($_POST['modifier_diplome'])) {
+        $image = uploaderFichierGenerique(
+            $_FILES['image'] ?? null,
+            'uploads/diplomes/',
+            $credentialImageMimes,
+            'diplome_',
+            $_POST['ancienne_image'] ?? null
+        );
+        modifierDiplome(
+            (int)$_POST['id'],
+            trim($_POST['title'] ?? ''),
+            trim($_POST['issuer'] ?? ''),
+            trim($_POST['date_label'] ?? ''),
+            trim($_POST['description'] ?? ''),
+            trim($_POST['url'] ?? ''),
+            trim($_POST['icon'] ?? 'fa fa-graduation-cap'),
+            (int)($_POST['sort_order'] ?? 0),
+            $image
+        );
+        redirigerDashboard('success_updated', 'diplomes');
+    }
+    if (isset($_POST['delete_diplome'])) {
+        supprimerDiplome((int)$_POST['delete_diplome']);
+        redirigerDashboard('success_deleted', 'diplomes');
+    }
+
     // Certifications
     if (isset($_POST['ajouter_certification'])) {
+        $image = uploaderFichierGenerique(
+            $_FILES['image'] ?? null,
+            'uploads/certifications/',
+            $credentialImageMimes,
+            'cert_',
+            null
+        );
         ajouterCertification(
             trim($_POST['title'] ?? ''),
             trim($_POST['issuer'] ?? ''),
@@ -145,11 +201,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             trim($_POST['description'] ?? ''),
             trim($_POST['url'] ?? ''),
             trim($_POST['icon'] ?? 'fa fa-certificate'),
-            (int)($_POST['sort_order'] ?? 0)
+            (int)($_POST['sort_order'] ?? 0),
+            $image
         );
         redirigerDashboard('success_added', 'certifications');
     }
     if (isset($_POST['modifier_certification'])) {
+        $image = uploaderFichierGenerique(
+            $_FILES['image'] ?? null,
+            'uploads/certifications/',
+            $credentialImageMimes,
+            'cert_',
+            $_POST['ancienne_image'] ?? null
+        );
         modifierCertification(
             (int)$_POST['id'],
             trim($_POST['title'] ?? ''),
@@ -158,7 +222,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             trim($_POST['description'] ?? ''),
             trim($_POST['url'] ?? ''),
             trim($_POST['icon'] ?? 'fa fa-certificate'),
-            (int)($_POST['sort_order'] ?? 0)
+            (int)($_POST['sort_order'] ?? 0),
+            $image
         );
         redirigerDashboard('success_updated', 'certifications');
     }
@@ -218,10 +283,13 @@ $messages = recupererMessages();
 $projects = recupererProjets();
 $skills = recupererCompetences();
 $services = recupererServices();
+$diplomes = recupererDiplomes();
 $certifications = recupererCertifications();
 $timeline = recupererParcours();
 $countProjects = count($projects);
 $countMessages = count($messages);
+$countDiplomes = count($diplomes);
+$countCertifications = count($certifications);
 $userName = $_SESSION['user_name'] ?? 'Admin';
 $csrf = htmlspecialchars($_SESSION['csrf_token']);
 
@@ -246,6 +314,7 @@ $tabTitles = [
     'profile' => 'Infos du site',
     'skills' => 'Compétences',
     'services' => 'Services',
+    'diplomes' => 'Diplômes',
     'certifications' => 'Certifications',
     'timeline' => 'Parcours',
     'projects' => 'Projets',
@@ -265,38 +334,99 @@ function he(?string $v): string {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        :root { --sidebar-w: 260px; --brand: #ec1839; --ink: #1e1e2d; --surface: #f4f6f9; }
+        :root {
+            --sidebar-w: 260px;
+            --brand: #ec1839;
+            --ink: #e9e9e9;
+            --ink-muted: #a0a0a0;
+            --surface: #151515;
+            --panel: #222222;
+            --panel-2: #2a2a2a;
+            --border: #393939;
+            --input-bg: #1c1c1c;
+        }
         body { background: var(--surface); color: var(--ink); }
-        .sidebar { width: var(--sidebar-w); min-height: 100vh; background: #1a1d23; color: #fff; position: fixed; inset: 0 auto 0 0; z-index: 1040; display: flex; flex-direction: column; transition: transform .25s ease; }
+        .sidebar { width: var(--sidebar-w); min-height: 100vh; background: #111111; color: #fff; position: fixed; inset: 0 auto 0 0; z-index: 1040; display: flex; flex-direction: column; transition: transform .25s ease; border-right: 1px solid var(--border); }
         .sidebar-brand { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,.08); }
         .sidebar-brand .logo span { color: var(--brand); }
         .sidebar .nav-link { color: rgba(255,255,255,.65); border-radius: .6rem; padding: .65rem 1rem; margin: .1rem .75rem; display: flex; align-items: center; gap: .65rem; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.1); }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(236,24,57,.18); }
         .sidebar .nav-link .badge { margin-left: auto; }
         .sidebar-footer { margin-top: auto; padding: 1rem; border-top: 1px solid rgba(255,255,255,.08); }
         .main-wrap { margin-left: var(--sidebar-w); min-height: 100vh; }
-        .topbar { background: #fff; border-bottom: 1px solid #e9ecef; padding: .85rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; position: sticky; top: 0; z-index: 1020; }
+        .topbar { background: var(--panel); border-bottom: 1px solid var(--border); padding: .85rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; position: sticky; top: 0; z-index: 1020; color: #fff; }
+        .topbar .text-muted, .topbar .small { color: var(--ink-muted) !important; }
         .content { padding: 1.5rem; }
-        .stat-card, .panel { background: #fff; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        .stat-card, .panel { background: var(--panel); border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.35); border: 1px solid var(--border); color: var(--ink); }
         .stat-card { height: 100%; }
         .stat-card .icon-box { width: 48px; height: 48px; border-radius: .85rem; display: grid; place-items: center; font-size: 1.25rem; }
-        .icon-box.red { background: rgba(236,24,57,.12); color: var(--brand); }
-        .icon-box.blue { background: rgba(13,110,253,.12); color: #0d6efd; }
-        .icon-box.green { background: rgba(25,135,84,.12); color: #198754; }
-        .icon-box.orange { background: rgba(253,126,20,.12); color: #fd7e14; }
+        .stat-card .text-muted { color: var(--ink-muted) !important; }
+        .icon-box.red { background: rgba(236,24,57,.18); color: #ff4d6d; }
+        .icon-box.blue { background: rgba(13,110,253,.18); color: #6ea8fe; }
+        .icon-box.green { background: rgba(25,135,84,.18); color: #75b798; }
+        .icon-box.orange { background: rgba(253,126,20,.18); color: #fdba74; }
+        .icon-box.purple { background: rgba(111,66,193,.18); color: #c29ffa; }
+        .icon-box.teal { background: rgba(32,201,151,.18); color: #63e6be; }
         .panel { overflow: hidden; }
-        .panel-header { padding: 1rem 1.25rem; border-bottom: 1px solid #f0f0f0; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; }
-        .project-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: .5rem; background: #eee; }
+        .panel-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; color: #fff; }
+        .project-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: .5rem; background: var(--panel-2); }
         .search-input { max-width: 280px; }
-        .table > :not(caption) > * > * { vertical-align: middle; }
+        .table { --bs-table-bg: transparent; --bs-table-color: var(--ink); --bs-table-border-color: var(--border); --bs-table-hover-bg: rgba(255,255,255,.04); --bs-table-hover-color: #fff; color: var(--ink); }
+        .table > :not(caption) > * > * { vertical-align: middle; background: transparent; color: inherit; border-bottom-color: var(--border); }
+        .table thead.table-light, .table-light { --bs-table-bg: var(--panel-2); --bs-table-color: #fff; --bs-table-border-color: var(--border); background: var(--panel-2); color: #fff; }
+        .text-muted, .small.text-muted, .table .text-muted { color: var(--ink-muted) !important; }
+        .fw-semibold, .fw-bold, h1, h2, h3, h4, h5, h6 { color: #fff; }
+        .stat-card .fw-semibold, .stat-card .fs-3 { color: #fff; }
         .msg-preview { max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .empty-state { text-align: center; padding: 3rem 1.5rem; color: #6c757d; }
+        .empty-state { text-align: center; padding: 3rem 1.5rem; color: var(--ink-muted); }
         .empty-state i { font-size: 2.5rem; opacity: .4; display: block; margin-bottom: .75rem; }
-        .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1035; }
+        .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 1035; }
         .sidebar-backdrop.show { display: block; }
         .img-preview-box { max-height: 140px; object-fit: cover; border-radius: .5rem; display: none; }
         .img-preview-box.show { display: block; }
-        .form-section-title { font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: #6c757d; margin: 1.25rem 0 .75rem; font-weight: 700; }
+        .form-section-title { font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-muted); margin: 1.25rem 0 .75rem; font-weight: 700; }
+        .form-label, .form-text { color: var(--ink-muted); }
+        .form-control, .form-select, .input-group-text {
+            background: var(--input-bg);
+            border-color: var(--border);
+            color: #fff;
+        }
+        .form-control::placeholder { color: #777; }
+        .form-control:focus, .form-select:focus {
+            background: var(--input-bg);
+            border-color: var(--brand);
+            color: #fff;
+            box-shadow: 0 0 0 .2rem rgba(236,24,57,.2);
+        }
+        .btn-outline-secondary, .btn-outline-primary, .btn-outline-danger, .btn-light {
+            --bs-btn-color: var(--ink);
+            --bs-btn-border-color: var(--border);
+            --bs-btn-hover-bg: var(--panel-2);
+            --bs-btn-hover-border-color: #555;
+            --bs-btn-hover-color: #fff;
+            background: transparent;
+            color: var(--ink);
+            border-color: var(--border);
+        }
+        .btn-light { background: var(--panel-2); color: #fff; border-color: var(--border); }
+        .btn-light:hover { background: #333; color: #fff; border-color: #555; }
+        .btn-outline-primary { --bs-btn-color: #6ea8fe; --bs-btn-border-color: rgba(110,168,254,.45); }
+        .btn-outline-danger { --bs-btn-color: #ff6b81; --bs-btn-border-color: rgba(255,107,129,.45); }
+        .modal-content { background: var(--panel); color: var(--ink); border: 1px solid var(--border); }
+        .modal-header, .modal-footer { border-color: var(--border); }
+        .modal-title { color: #fff; }
+        .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+        .alert-light { background: var(--panel-2); color: var(--ink); border-color: var(--border); }
+        .alert-success { background: rgba(25,135,84,.15); color: #75b798; border-color: rgba(25,135,84,.35); }
+        .alert-danger { background: rgba(220,53,69,.15); color: #ea868f; border-color: rgba(220,53,69,.35); }
+        .badge.text-bg-secondary { background: #444 !important; color: #fff !important; }
+        .text-bg-danger { background: var(--brand) !important; }
+        .text-bg-primary { background: #0d6efd !important; }
+        .text-bg-success { background: #198754 !important; }
+        .border { border-color: var(--border) !important; }
+        a { color: #ff6b81; }
+        a:hover { color: #ff8a9a; }
+        .stretched-link { color: inherit; }
         @media (max-width: 991.98px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
@@ -304,7 +434,7 @@ function he(?string $v): string {
         }
     </style>
 </head>
-<body>
+<body class="dashboard-dark">
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
         <div class="logo fs-5 fw-bold"><span><?= he($s['logo_letter'] ?? 'M') ?></span><?= he($s['logo_text'] ?? "'Sow") ?> Admin</div>
@@ -315,7 +445,8 @@ function he(?string $v): string {
         <a class="nav-link <?= $tab === 'profile' ? 'active' : '' ?>" href="dashboard.php?tab=profile"><i class="bi bi-person-gear"></i> Infos du site</a>
         <a class="nav-link <?= $tab === 'skills' ? 'active' : '' ?>" href="dashboard.php?tab=skills"><i class="bi bi-bar-chart"></i> Compétences</a>
         <a class="nav-link <?= $tab === 'services' ? 'active' : '' ?>" href="dashboard.php?tab=services"><i class="bi bi-grid"></i> Services</a>
-        <a class="nav-link <?= $tab === 'certifications' ? 'active' : '' ?>" href="dashboard.php?tab=certifications"><i class="bi bi-award"></i> Certifications</a>
+        <a class="nav-link <?= $tab === 'diplomes' ? 'active' : '' ?>" href="dashboard.php?tab=diplomes"><i class="bi bi-mortarboard"></i> Diplômes <span class="badge text-bg-secondary"><?= $countDiplomes ?></span></a>
+        <a class="nav-link <?= $tab === 'certifications' ? 'active' : '' ?>" href="dashboard.php?tab=certifications"><i class="bi bi-award"></i> Certifications <span class="badge text-bg-secondary"><?= $countCertifications ?></span></a>
         <a class="nav-link <?= $tab === 'timeline' ? 'active' : '' ?>" href="dashboard.php?tab=timeline"><i class="bi bi-clock-history"></i> Parcours</a>
         <a class="nav-link <?= $tab === 'projects' ? 'active' : '' ?>" href="dashboard.php?tab=projects"><i class="bi bi-briefcase"></i> Projets <span class="badge text-bg-secondary"><?= $countProjects ?></span></a>
         <a class="nav-link <?= $tab === 'messages' ? 'active' : '' ?>" href="dashboard.php?tab=messages"><i class="bi bi-chat-left-text"></i> Messages <span class="badge text-bg-danger"><?= $countMessages ?></span></a>
@@ -342,6 +473,8 @@ function he(?string $v): string {
             <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAjoutSkill"><i class="bi bi-plus-lg me-1"></i> Compétence</button>
         <?php elseif ($tab === 'services'): ?>
             <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAjoutService"><i class="bi bi-plus-lg me-1"></i> Service</button>
+        <?php elseif ($tab === 'diplomes'): ?>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAjoutDiplome"><i class="bi bi-plus-lg me-1"></i> Diplôme</button>
         <?php elseif ($tab === 'certifications'): ?>
             <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAjoutCert"><i class="bi bi-plus-lg me-1"></i> Certification</button>
         <?php elseif ($tab === 'timeline'): ?>
@@ -363,6 +496,8 @@ function he(?string $v): string {
                 <div class="col-md-3"><div class="stat-card p-3 position-relative"><div class="d-flex align-items-center gap-3"><div class="icon-box orange"><i class="bi bi-briefcase"></i></div><div><div class="text-muted small">Projets</div><div class="fs-3 fw-bold lh-1"><?= $countProjects ?></div></div></div><a href="dashboard.php?tab=projects" class="stretched-link"></a></div></div>
                 <div class="col-md-3"><div class="stat-card p-3 position-relative"><div class="d-flex align-items-center gap-3"><div class="icon-box blue"><i class="bi bi-envelope"></i></div><div><div class="text-muted small">Messages</div><div class="fs-3 fw-bold lh-1"><?= $countMessages ?></div></div></div><a href="dashboard.php?tab=messages" class="stretched-link"></a></div></div>
                 <div class="col-md-3"><div class="stat-card p-3 position-relative"><div class="d-flex align-items-center gap-3"><div class="icon-box green"><i class="bi bi-grid"></i></div><div><div class="text-muted small">Services</div><div class="fs-3 fw-bold lh-1"><?= count($services) ?></div></div></div><a href="dashboard.php?tab=services" class="stretched-link"></a></div></div>
+                <div class="col-md-3"><div class="stat-card p-3 position-relative"><div class="d-flex align-items-center gap-3"><div class="icon-box purple"><i class="bi bi-mortarboard"></i></div><div><div class="text-muted small">Diplômes</div><div class="fs-3 fw-bold lh-1"><?= $countDiplomes ?></div></div></div><a href="dashboard.php?tab=diplomes" class="stretched-link"></a></div></div>
+                <div class="col-md-3"><div class="stat-card p-3 position-relative"><div class="d-flex align-items-center gap-3"><div class="icon-box teal"><i class="bi bi-award"></i></div><div><div class="text-muted small">Certifications</div><div class="fs-3 fw-bold lh-1"><?= $countCertifications ?></div></div></div><a href="dashboard.php?tab=certifications" class="stretched-link"></a></div></div>
             </div>
             <div class="alert alert-light border">
                 <strong>Astuce :</strong> utilisez le menu <em>Infos du site</em> pour modifier le texte d’accueil, la bio, les contacts, la photo et le CV. Les compétences, services et parcours ont chacun leur onglet.
@@ -553,6 +688,88 @@ function he(?string $v): string {
             <?php endforeach; ?>
         <?php endif; ?>
 
+        <?php if ($tab === 'diplomes'): ?>
+            <div class="panel">
+                <div class="panel-header"><h2 class="h6 mb-0">Diplômes (<?= count($diplomes) ?>)</h2></div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Diplôme</th>
+                                <th>Établissement</th>
+                                <th class="d-none d-md-table-cell">Date</th>
+                                <th class="text-end pe-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php if (!$diplomes): ?>
+                            <tr><td colspan="4"><div class="empty-state"><i class="bi bi-mortarboard"></i>Aucun diplôme.</div></td></tr>
+                        <?php endif; ?>
+                        <?php foreach ($diplomes as $diplome): $imgSrc = !empty($diplome['image']) ? $diplome['image'] : ''; ?>
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <?php if ($imgSrc && file_exists($imgSrc)): ?>
+                                            <img src="<?= he($imgSrc) ?>" alt="" width="48" height="36" class="rounded object-fit-cover">
+                                        <?php endif; ?>
+                                        <div>
+                                            <div class="fw-semibold"><?= he($diplome['title']) ?></div>
+                                            <div class="small text-muted"><?= he(mb_strimwidth($diplome['description'] ?? '', 0, 80, '...')) ?></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge text-bg-danger"><?= he($diplome['issuer']) ?></span></td>
+                                <td class="d-none d-md-table-cell small text-muted"><?= he($diplome['date_label']) ?></td>
+                                <td class="text-end pe-3">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDiplome<?= (int)$diplome['id'] ?>"><i class="bi bi-pencil"></i></button>
+                                    <form method="POST" class="d-inline" onsubmit="return confirm('Supprimer ce diplôme ?')">
+                                        <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                                        <button type="submit" name="delete_diplome" value="<?= (int)$diplome['id'] ?>" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <?php foreach ($diplomes as $diplome): $imgSrc = !empty($diplome['image']) ? $diplome['image'] : ''; ?>
+            <div class="modal fade" id="editDiplome<?= (int)$diplome['id'] ?>" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                            <input type="hidden" name="id" value="<?= (int)$diplome['id'] ?>">
+                            <input type="hidden" name="ancienne_image" value="<?= he($diplome['image'] ?? '') ?>">
+                            <div class="modal-header"><h5 class="modal-title">Modifier diplôme</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                            <div class="modal-body">
+                                <div class="mb-3"><label class="form-label">Titre</label><input type="text" name="title" class="form-control" value="<?= he($diplome['title']) ?>" required></div>
+                                <div class="mb-3"><label class="form-label">Établissement</label><input type="text" name="issuer" class="form-control" value="<?= he($diplome['issuer']) ?>" required placeholder="Université, école..."></div>
+                                <div class="mb-3"><label class="form-label">Date / période</label><input type="text" name="date_label" class="form-control" value="<?= he($diplome['date_label']) ?>" placeholder="2022 - 2023"></div>
+                                <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"><?= he($diplome['description']) ?></textarea></div>
+                                <div class="mb-3"><label class="form-label">Lien du diplôme (URL)</label><input type="url" name="url" class="form-control" value="<?= he($diplome['url']) ?>" placeholder="https://..."></div>
+                                <div class="mb-3">
+                                    <label class="form-label">Image du diplôme</label>
+                                    <?php if ($imgSrc && file_exists($imgSrc)): ?>
+                                        <div class="mb-2"><img src="<?= he($imgSrc) ?>" alt="" class="rounded border" style="max-width:100%;max-height:160px;object-fit:contain;"></div>
+                                    <?php endif; ?>
+                                    <input type="file" name="image" class="form-control" accept="image/*">
+                                    <div class="form-text">JPG, PNG, WEBP ou GIF — max 8 Mo</div>
+                                </div>
+                                <div class="mb-3"><label class="form-label">Icône</label><input type="text" name="icon" class="form-control" value="<?= he($diplome['icon']) ?>" placeholder="fa fa-graduation-cap"></div>
+                                <div class="mb-3"><label class="form-label">Ordre</label><input type="number" name="sort_order" class="form-control" value="<?= (int)$diplome['sort_order'] ?>"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                                <button type="submit" name="modifier_diplome" class="btn btn-primary">Enregistrer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+
         <?php if ($tab === 'certifications'): ?>
             <div class="panel">
                 <div class="panel-header"><h2 class="h6 mb-0">Certifications (<?= count($certifications) ?>)</h2></div>
@@ -570,11 +787,18 @@ function he(?string $v): string {
                         <?php if (!$certifications): ?>
                             <tr><td colspan="4"><div class="empty-state"><i class="bi bi-award"></i>Aucune certification.</div></td></tr>
                         <?php endif; ?>
-                        <?php foreach ($certifications as $cert): ?>
+                        <?php foreach ($certifications as $cert): $imgSrc = !empty($cert['image']) ? $cert['image'] : ''; ?>
                             <tr>
                                 <td class="ps-3">
-                                    <div class="fw-semibold"><?= he($cert['title']) ?></div>
-                                    <div class="small text-muted"><?= he(mb_strimwidth($cert['description'] ?? '', 0, 80, '...')) ?></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <?php if ($imgSrc && file_exists($imgSrc)): ?>
+                                            <img src="<?= he($imgSrc) ?>" alt="" width="48" height="36" class="rounded object-fit-cover">
+                                        <?php endif; ?>
+                                        <div>
+                                            <div class="fw-semibold"><?= he($cert['title']) ?></div>
+                                            <div class="small text-muted"><?= he(mb_strimwidth($cert['description'] ?? '', 0, 80, '...')) ?></div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td><span class="badge text-bg-danger"><?= he($cert['issuer']) ?></span></td>
                                 <td class="d-none d-md-table-cell small text-muted"><?= he($cert['date_label']) ?></td>
@@ -591,13 +815,14 @@ function he(?string $v): string {
                     </table>
                 </div>
             </div>
-            <?php foreach ($certifications as $cert): ?>
+            <?php foreach ($certifications as $cert): $imgSrc = !empty($cert['image']) ? $cert['image'] : ''; ?>
             <div class="modal fade" id="editCert<?= (int)$cert['id'] ?>" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content border-0 shadow">
-                        <form method="POST">
+                        <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
                             <input type="hidden" name="id" value="<?= (int)$cert['id'] ?>">
+                            <input type="hidden" name="ancienne_image" value="<?= he($cert['image'] ?? '') ?>">
                             <div class="modal-header"><h5 class="modal-title">Modifier certification</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                             <div class="modal-body">
                                 <div class="mb-3"><label class="form-label">Titre</label><input type="text" name="title" class="form-control" value="<?= he($cert['title']) ?>" required></div>
@@ -605,6 +830,14 @@ function he(?string $v): string {
                                 <div class="mb-3"><label class="form-label">Date / période</label><input type="text" name="date_label" class="form-control" value="<?= he($cert['date_label']) ?>" placeholder="2024"></div>
                                 <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"><?= he($cert['description']) ?></textarea></div>
                                 <div class="mb-3"><label class="form-label">Lien du certificat (URL)</label><input type="url" name="url" class="form-control" value="<?= he($cert['url']) ?>" placeholder="https://..."></div>
+                                <div class="mb-3">
+                                    <label class="form-label">Image du certificat</label>
+                                    <?php if ($imgSrc && file_exists($imgSrc)): ?>
+                                        <div class="mb-2"><img src="<?= he($imgSrc) ?>" alt="" class="rounded border" style="max-width:100%;max-height:160px;object-fit:contain;"></div>
+                                    <?php endif; ?>
+                                    <input type="file" name="image" class="form-control" accept="image/*">
+                                    <div class="form-text">JPG, PNG, WEBP ou GIF — max 8 Mo</div>
+                                </div>
                                 <div class="mb-3"><label class="form-label">Icône</label><input type="text" name="icon" class="form-control" value="<?= he($cert['icon']) ?>" placeholder="fa fa-certificate"></div>
                                 <div class="mb-3"><label class="form-label">Ordre</label><input type="number" name="sort_order" class="form-control" value="<?= (int)$cert['sort_order'] ?>"></div>
                             </div>
@@ -801,8 +1034,25 @@ function he(?string $v): string {
     </form>
 </div></div></div>
 
+<div class="modal fade" id="modalAjoutDiplome" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+    <form method="POST" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+        <div class="modal-header"><h5 class="modal-title">Nouveau diplôme</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <div class="mb-3"><label class="form-label">Titre</label><input type="text" name="title" class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Établissement</label><input type="text" name="issuer" class="form-control" required placeholder="Université, école..."></div>
+            <div class="mb-3"><label class="form-label">Date / période</label><input type="text" name="date_label" class="form-control" placeholder="2022 - 2023"></div>
+            <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+            <div class="mb-3"><label class="form-label">Lien du diplôme (URL)</label><input type="url" name="url" class="form-control" placeholder="https://..."></div>
+            <div class="mb-3"><label class="form-label">Image du diplôme</label><input type="file" name="image" class="form-control" accept="image/*"><div class="form-text">JPG, PNG, WEBP ou GIF — max 8 Mo</div></div>
+            <div class="mb-3"><label class="form-label">Icône</label><input type="text" name="icon" class="form-control" value="fa fa-graduation-cap"></div>
+            <div class="mb-3"><label class="form-label">Ordre</label><input type="number" name="sort_order" class="form-control" value="0"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button><button type="submit" name="ajouter_diplome" class="btn btn-danger">Ajouter</button></div>
+    </form>
+</div></div></div>
+
 <div class="modal fade" id="modalAjoutCert" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
-    <form method="POST"><input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+    <form method="POST" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="<?= $csrf ?>">
         <div class="modal-header"><h5 class="modal-title">Nouvelle certification</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
             <div class="mb-3"><label class="form-label">Titre</label><input type="text" name="title" class="form-control" required></div>
@@ -810,6 +1060,7 @@ function he(?string $v): string {
             <div class="mb-3"><label class="form-label">Date / période</label><input type="text" name="date_label" class="form-control" placeholder="2024"></div>
             <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div>
             <div class="mb-3"><label class="form-label">Lien du certificat (URL)</label><input type="url" name="url" class="form-control" placeholder="https://..."></div>
+            <div class="mb-3"><label class="form-label">Image du certificat</label><input type="file" name="image" class="form-control" accept="image/*"><div class="form-text">JPG, PNG, WEBP ou GIF — max 8 Mo</div></div>
             <div class="mb-3"><label class="form-label">Icône</label><input type="text" name="icon" class="form-control" value="fa fa-certificate"></div>
             <div class="mb-3"><label class="form-label">Ordre</label><input type="number" name="sort_order" class="form-control" value="0"></div>
         </div>
@@ -858,6 +1109,7 @@ function he(?string $v): string {
         profile: 'about',
         skills: 'about',
         services: 'services',
+        diplomes: 'diplomes',
         certifications: 'certifications',
         timeline: 'about',
         projects: 'portfolio',
